@@ -1,7 +1,16 @@
-const Evento = require('../models/evento');
+const Evento = require('../models/eventoModel');
+const Agenda = require('../models/agendaModel');
+const { obtenerRangoDeBloque, validarEventoDisponible } = require('../utils/funciones');
 
 const crearEvento = async (req, res) => {
   try {
+    const { fecha, agendaId } = req.body;
+    const agenda = await Agenda.findById(agendaId);
+    if (!agenda) throw new Error('Agenda no encontrada');
+
+    const error = await validarEventoDisponible({ fecha: new Date(fecha), agenda, agendaId });
+    if (error) throw new Error(error);
+
     const nuevoEvento = new Evento(req.body);
     const eventoGuardado = await nuevoEvento.save();
     res.status(201).json(eventoGuardado);
@@ -30,6 +39,13 @@ const obtenerEventosPorAgenda = async (req, res) => {
 
 const actualizarEvento = async (req, res) => {
   try {
+    const { fecha, agendaId } = req.body;
+    const agenda = await Agenda.findById(agendaId);
+    if (!agenda) throw new Error('Agenda no encontrada');
+
+    const error = await validarEventoDisponible({ fecha: new Date(fecha), agenda, agendaId, idActual: req.params.id });
+    if (error) throw new Error(error);
+
     const evento = await Evento.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!evento) return res.status(404).json({ mensaje: 'Evento no encontrado' });
     res.json(evento);

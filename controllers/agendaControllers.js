@@ -1,4 +1,4 @@
-const Agenda = require('../models/agenda');
+const Agenda = require('../models/agendaModel');
 const { 
   validarHorarios, 
   validarHorariosDisponibles 

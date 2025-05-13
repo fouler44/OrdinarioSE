@@ -12,8 +12,8 @@ const app = express()
 app.use(express.json())
 app.use(express.urlencoded({extended: false}))
 
-app.use('/api/agendas', agendaRoutes);
-app.use('/api/eventos', eventoRoutes);
+app.use('/api/agendas', require('./routes/agendaRoutes'));
+app.use('/api/eventos', require('./routes/eventoRoutes'));
 
 app.use(errorHandler)
 
