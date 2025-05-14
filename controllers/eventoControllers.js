@@ -4,14 +4,21 @@ const { obtenerRangoDeBloque, validarEventoDisponible } = require('../utils/func
 
 const crearEvento = async (req, res) => {
   try {
-    const { fecha, agendaId } = req.body;
+    const { fecha, agendaId, ...resto } = req.body;
+
     const agenda = await Agenda.findById(agendaId);
     if (!agenda) throw new Error('Agenda no encontrada');
 
-    const error = await validarEventoDisponible({ fecha: new Date(fecha), agenda, agendaId });
+    // Convertir fecha como local
+    const [fechaStr, horaStr] = fecha.split('T');
+    const [anio, mes, dia] = fechaStr.split('-').map(Number);
+    const [hora, minuto, segundo = 0] = horaStr.split(':').map(Number);
+    const fechaLocal = new Date(anio, mes - 1, dia, hora, minuto, segundo);
+
+    const error = await validarEventoDisponible({ fecha: fechaLocal, agenda, agendaId });
     if (error) throw new Error(error);
 
-    const nuevoEvento = new Evento(req.body);
+    const nuevoEvento = new Evento({ fecha: fechaLocal, agendaId, ...resto });
     const eventoGuardado = await nuevoEvento.save();
     res.status(201).json(eventoGuardado);
   } catch (error) {
@@ -39,14 +46,31 @@ const obtenerEventosPorAgenda = async (req, res) => {
 
 const actualizarEvento = async (req, res) => {
   try {
-    const { fecha, agendaId } = req.body;
+    const { fecha, agendaId, ...resto } = req.body;
+
     const agenda = await Agenda.findById(agendaId);
     if (!agenda) throw new Error('Agenda no encontrada');
 
-    const error = await validarEventoDisponible({ fecha: new Date(fecha), agenda, agendaId, idActual: req.params.id });
+    // Convertir fecha como local
+    const [fechaStr, horaStr] = fecha.split('T');
+    const [anio, mes, dia] = fechaStr.split('-').map(Number);
+    const [hora, minuto, segundo = 0] = horaStr.split(':').map(Number);
+    const fechaLocal = new Date(anio, mes - 1, dia, hora, minuto, segundo);
+
+    const error = await validarEventoDisponible({
+      fecha: fechaLocal,
+      agenda,
+      agendaId,
+      idActual: req.params.id
+    });
     if (error) throw new Error(error);
 
-    const evento = await Evento.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const evento = await Evento.findByIdAndUpdate(
+      req.params.id,
+      { fecha: fechaLocal, agendaId, ...resto },
+      { new: true }
+    );
+
     if (!evento) return res.status(404).json({ mensaje: 'Evento no encontrado' });
     res.json(evento);
   } catch (error) {
@@ -69,5 +93,5 @@ module.exports = {
   obtenerEventos,
   obtenerEventosPorAgenda,
   actualizarEvento,
-  eliminarEvento,
+  eliminarEvento
 };

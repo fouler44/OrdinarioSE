@@ -1,3 +1,6 @@
+const Evento = require('../models/eventoModel');
+
+
 function convertirHoraAMinutos(horaStr) {
   const [horas, minutos] = horaStr.split(':').map(Number);
   return horas * 60 + minutos;
